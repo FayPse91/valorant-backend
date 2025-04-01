@@ -19,7 +19,9 @@ app.get("/auth/link", (req, res) => {
 });
 
 // (Tu peux plus tard ajouter une route /callback si tu gères un vrai token avec code exchange)
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => {
-  console.log(`✅ Serveur backend lancé sur http://localhost:${PORT}`);
+  console.log(`✅ Serveur backend lancé sur le port ${PORT}`);
 });
+
