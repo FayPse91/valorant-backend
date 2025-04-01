@@ -7,9 +7,9 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/redirect', (req, res) => {
-  res.send("✅ Connecté avec Riot ! Vous pouvez retourner dans l'application.");
+  const code = req.query.code;
+  res.send(`Code reçu : ${code}`);
 });
-
 
 const PORT = process.env.PORT || 10000;
 
