@@ -6,11 +6,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("✅ Backend Valorant opérationnel sur Render");
+app.get('/redirect', (req, res) => {
+  res.send("✅ Connecté avec Riot ! Vous pouvez retourner dans l'application.");
 });
 
-// Utilise le port fourni par Render, ou 10000 en local
+
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
