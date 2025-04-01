@@ -2,6 +2,14 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
+const authenticateRiot = require("./riotAuth");
+
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+  const result = await authenticateRiot(username, password);
+  res.json(result);
+});
+
 const app = express();
 app.use(cors());
 app.use(express.json());

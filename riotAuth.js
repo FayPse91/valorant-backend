@@ -1,38 +1,59 @@
 const axios = require('axios');
 
-async function riotLogin(username, password) {
-  const session = await axios.put("https://auth.riotgames.com/api/v1/authorization", {
-    client_id: "play-valorant-web-prod",
-    nonce: "1",
-    redirect_uri: "https://playvalorant.com/opt_in",
-    response_type: "token id_token",
-    scope: "account openid",
-  });
+async function authenticateRiot(username, password) {
+  try {
+    const authPayload = {
+      "client_id": "play-valorant-web-prod",
+      "nonce": "1",
+      "redirect_uri": "https://playvalorant.com/opt_in",
+      "response_type": "token id_token",
+      "scope": "account openid"
+    };
 
-  const auth = await axios.put("https://auth.riotgames.com/api/v1/authorization", {
-    type: "auth",
-    username,
-    password,
-  });
+    const headers = {
+      'Content-Type': 'application/json',
+    };
 
-  const uri = auth.data.response.parameters.uri;
-  const access_token = uri.match(/access_token=([^&]+)/)[1];
+    // Step 1: Start auth session
+    const authResponse = await axios.put('https://auth.riotgames.com/api/v1/authorization', {
+      ...authPayload
+    }, { headers });
 
-  const ent = await axios.post("https://entitlements.auth.riotgames.com/api/token/v1", {}, {
-    headers: { Authorization: `Bearer ${access_token}` }
-  });
+    // Step 2: Send login data
+    const loginResponse = await axios.put('https://auth.riotgames.com/api/v1/authorization', {
+      ...authPayload,
+      type: "auth",
+      username,
+      password
+    }, { headers });
 
-  const user = await axios.post("https://auth.riotgames.com/userinfo", {}, {
-    headers: { Authorization: `Bearer ${access_token}` }
-  });
+    if (loginResponse.data.error) {
+      return { error: loginResponse.data.error };
+    }
 
-  return {
-    access_token,
-    entitlement_token: ent.data.entitlements_token,
-    puuid: user.data.sub,
-    name: user.data.acct.game_name,
-    tag: user.data.acct.tag_line,
-  };
+    const uri = loginResponse.data.response.parameters.uri;
+    const access_token = uri.match(/access_token=([^&]*)/)[1];
+    const id_token = uri.match(/id_token=([^&]*)/)[1];
+
+    // Step 3: Get entitlement token
+    const entRes = await axios.post("https://entitlements.auth.riotgames.com/api/token/v1", {}, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`
+      }
+    });
+
+    const entitlements_token = entRes.data.entitlements_token;
+
+    return {
+      access_token,
+      id_token,
+      entitlements_token
+    };
+
+  } catch (err) {
+    console.error("Erreur d'auth Riot:", err.message);
+    return { error: "Auth failed" };
+  }
 }
 
-module.exports = { riotLogin };
+module.exports = authenticateRiot;
